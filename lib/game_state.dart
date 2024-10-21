@@ -1,6 +1,7 @@
 import "dart:async";
 
 import "package:flutter/material.dart";
+import "package:flutter/services.dart";
 import "package:flutter_tetris/point.dart";
 import "package:flutter_tetris/shape.dart";
 
@@ -29,12 +30,50 @@ class GameState with ChangeNotifier {
 
   // Inputs
   void handleKeyPress(KeyEvent event) {
-    print(event);
+    // We only handle the keydown events.
+    if (event is KeyUpEvent) {
+      return;
+    }
+
+    assert(activeShape != null && position != null, "The game must be started at this point.");
+
+    /// FRST layout.
+    switch (event.logicalKey) {
+      /// Hard drop.
+      case LogicalKeyboardKey.keyF:
+        position = position! + Point.up;
+
+      /// Move left
+      case LogicalKeyboardKey.keyR:
+        position = position! + Point.left;
+
+      /// Move down
+      case LogicalKeyboardKey.keyS:
+        position = position! + Point.down;
+
+      /// Move right
+      case LogicalKeyboardKey.keyT:
+        position = position! + Point.right;
+
+      /// Rotate counter-clockwise
+      case LogicalKeyboardKey.keyN:
+        activeShape!.rotate(clockwise: false);
+        print("Rotate counter-clockwise");
+
+      /// Rotate clockwise.
+      case LogicalKeyboardKey.keyE:
+        activeShape!.rotate(clockwise: true);
+        print("Rotate clockwise");
+      case _:
+    }
+
+    // print(position);
+    notifyListeners();
   }
 
   // Update
   void tick(int timeDelta) {
-    print(timeDelta);
+    // print(timeDelta);
   }
 
   // Life-Cycle
@@ -43,7 +82,7 @@ class GameState with ChangeNotifier {
 
     assert(activeShape != null);
     if (activeShape case Shape activeShape) {
-      int startingX = (columns - activeShape.shape[0].length) ~/ 2;
+      int startingX = (columns - activeShape.grid[0].length) ~/ 2;
 
       position = Point(-1, startingX);
     }
