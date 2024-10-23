@@ -37,9 +37,8 @@ class GameState with ChangeNotifier {
   void handleKeyPress(KeyEvent event) {
     assert(activeShape != null && position != null, "The game must be started at this point.");
 
-    /// FRST layout.
-
     if (event is KeyDownEvent) {
+      /// FRST layout.
       switch (event.logicalKey) {
         /// Hard drop.
         case LogicalKeyboardKey.keyF:
@@ -96,14 +95,7 @@ class GameState with ChangeNotifier {
 
   // Life-Cycle
   void init() {
-    activeShape = Shape.chooseRandom();
-
-    assert(activeShape != null);
-    if (activeShape case Shape activeShape) {
-      int startingX = (columns - activeShape.grid[0].length) ~/ 2;
-
-      position = Point(0, startingX);
-    }
+    _reset();
 
     /// Create the loop.
     activeTimer = Timer.periodic(const Duration(milliseconds: 8), (_) {
@@ -113,6 +105,17 @@ class GameState with ChangeNotifier {
 
       tick(timeDelta);
     });
+  }
+
+  Point? get ghostPosition {
+    if ((activeShape, position) case (Shape shape, Point position)) {
+      while (_isValidPiece(shape, position + Point.down)) {
+        position += Point.down;
+      }
+
+      return position;
+    }
+    return null;
   }
 
   // Private functions
@@ -157,15 +160,8 @@ class GameState with ChangeNotifier {
 
   /// Skips to the bottom.
   void _jump() {
-    if ((activeShape, position) case (Shape shape, Point position)) {
-      while (_isValidPiece(shape, position)) {
-        position += Point.down;
-      }
-
-      position += Point.up;
-      this.position = position;
-      _harden();
-    }
+    position = ghostPosition;
+    _harden();
   }
 
   /// Clears the lines from the board if they're full.
