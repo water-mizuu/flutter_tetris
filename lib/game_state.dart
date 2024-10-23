@@ -35,41 +35,42 @@ class GameState with ChangeNotifier {
 
   // Inputs
   void handleKeyPress(KeyEvent event) {
-    // We only handle the keydown events.
-    if (event is KeyUpEvent) {
-      return;
-    }
-
     assert(activeShape != null && position != null, "The game must be started at this point.");
 
     /// FRST layout.
-    switch (event.logicalKey) {
-      /// Hard drop.
-      case LogicalKeyboardKey.keyF:
-        _jump();
 
-      /// Move left
-      case LogicalKeyboardKey.keyR:
-        _move(Direction.left);
+    if (event is KeyDownEvent) {
+      switch (event.logicalKey) {
+        /// Hard drop.
+        case LogicalKeyboardKey.keyF:
+          _jump();
 
-      /// Move down
-      case LogicalKeyboardKey.keyS:
-        _move(Direction.down);
+        /// Move left
+        case LogicalKeyboardKey.keyR:
+          _move(Direction.left);
 
-      /// Move right
-      case LogicalKeyboardKey.keyT:
-        _move(Direction.right);
+        /// Move down
+        case LogicalKeyboardKey.keyS:
+          _move(Direction.down);
 
-      /// Rotate counter-clockwise
-      case LogicalKeyboardKey.keyN:
-        _rotate(RotationDirection.counterClockwise);
+        /// Move right
+        case LogicalKeyboardKey.keyT:
+          _move(Direction.right);
 
-      /// Rotate clockwise.
-      case LogicalKeyboardKey.keyE:
-        _rotate(RotationDirection.clockwise);
-      case LogicalKeyboardKey.space:
-        print(_canMove(Direction.down));
-      case _:
+        case LogicalKeyboardKey.shiftLeft:
+        case LogicalKeyboardKey.shiftRight:
+          _reset();
+
+        /// Rotate counter-clockwise
+        case LogicalKeyboardKey.keyN:
+          _rotate(RotationDirection.counterClockwise);
+
+        /// Rotate clockwise.
+        case LogicalKeyboardKey.keyE:
+          _rotate(RotationDirection.clockwise);
+        case LogicalKeyboardKey.space:
+          print(_canMove(Direction.down));
+      }
     }
 
     // print(position);
@@ -95,7 +96,7 @@ class GameState with ChangeNotifier {
 
   // Life-Cycle
   void init() {
-    activeShape = Shape.I;
+    activeShape = Shape.chooseRandom();
 
     assert(activeShape != null);
     if (activeShape case Shape activeShape) {
@@ -121,18 +122,27 @@ class GameState with ChangeNotifier {
     if ((activeShape, position) case (Shape shape, Point position)) {
       for (Point point in shape.grid.points) {
         var Point(:int y, :int x) = point + position;
+        if (!board.containsIndex((y, x))) {
+          continue;
+        }
 
         if (shape.grid[point.y][point.x] case int v && != 0) {
           board[y][x] = v;
         }
       }
-    }
 
-    /// Reset.
+      _clearLines();
+      _reset();
+    }
+  }
+
+  /// Replaces [activeShape] with a new one, and updating the held piece.
+  void _reset() {
     if (activeShape = Shape.chooseRandom() case Shape activeShape) {
       int startingX = (columns - activeShape.grid[0].length) ~/ 2;
 
       position = Point(0, startingX);
+      timeSincePreviousDrag = 0;
     }
   }
 
@@ -149,13 +159,26 @@ class GameState with ChangeNotifier {
   void _jump() {
     if ((activeShape, position) case (Shape shape, Point position)) {
       while (_isValidPiece(shape, position)) {
-        print(position);
         position += Point.down;
       }
 
       position += Point.up;
+      this.position = position;
       _harden();
     }
+  }
+
+  /// Clears the lines from the board if they're full.
+  void _clearLines() {
+    List<int> rows = <int>[
+      /// NOTE: This is in descending order, so that the indices aren't affected once removed.
+      for (int y = board.length - 1; y >= 0; --y)
+        if (board[y].every((int v) => v != 0)) y,
+    ];
+
+    rows
+      ..forEach(board.removeAt)
+      ..forEach((_) => board.insert(0, List<int>.filled(columns, 0)));
   }
 
   /// Rotates the piece, and moves it if it's reached an improbable state.

@@ -104,7 +104,7 @@ class Shape {
     }
   }
 
-  static final Random _random = Random();
+  static final Random _random = Random.secure();
   static Color? colorFrom(int value) => switch (value) {
         1 => Colors.yellow,
         2 => Colors.cyan,
