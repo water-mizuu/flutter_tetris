@@ -1,0 +1,4 @@
+enum RotationDirection {
+  clockwise,
+  counterClockwise,
+}

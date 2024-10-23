@@ -61,6 +61,8 @@ class Shape {
 
   final List<List<int>> grid;
 
+  /// Resolves the rotation points of a given n×n matrix
+  ///   for each iteration [i, n).
   static List<(int, int)> _rotationPoints(
     int layer,
     int dimensions,
@@ -82,6 +84,7 @@ class Shape {
     return indices;
   }
 
+  /// Rotates the [grid] of this shape in place.
   void rotate({required bool clockwise}) {
     assert(grid.length == grid[0].length);
 
@@ -97,13 +100,11 @@ class Shape {
           grid[toY][toX] = grid[fromY][fromX];
         }
         grid[indices.first.$1][indices.first.$2] = temp;
-        print(indices);
       }
     }
   }
 
   static final Random _random = Random();
-
   static Color? colorFrom(int value) => switch (value) {
         1 => Colors.yellow,
         2 => Colors.cyan,

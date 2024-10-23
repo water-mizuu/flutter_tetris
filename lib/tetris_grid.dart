@@ -1,6 +1,7 @@
 import "package:flutter/material.dart";
+import "package:flutter_tetris/extension_types/point.dart";
+import "package:flutter_tetris/extensions/matrix_iteration.dart";
 import "package:flutter_tetris/game_state.dart";
-import "package:flutter_tetris/point.dart";
 import "package:flutter_tetris/shape.dart";
 import "package:provider/provider.dart";
 
@@ -18,15 +19,17 @@ class TetrisGrid extends StatelessWidget {
       for (List<int> row in state.board) <int>[...row],
     ];
 
-    if ((state.position, state.activeShape) case (Point position, Shape shape)) {
-      for (int y = 0; y < shape.grid.length; ++y) {
-        for (int x = 0; x < shape.grid[y].length; ++x) {
-          if (y + position.y case int y_ when 0 <= y_ && y_ < GameState.rows) {
-            if (x + position.x case int x_ when 0 <= x_ && x_ < GameState.columns) {
-              overlayedBoard[y_][x_] = shape.grid[y][x];
-            }
-          }
+    if (state case GameState(:Point position, activeShape: Shape shape)) {
+      for (var (int y, int x) in shape.grid.indices) {
+        int newY = y + position.y;
+        int newX = x + position.x;
+        if (shape.grid[y][x] == 0 ||
+            !(0 <= newY && newY < GameState.rows) ||
+            !(0 <= newX && newX < GameState.columns)) {
+          continue;
         }
+
+        overlayedBoard[newY][newX] = shape.grid[y][x];
       }
     }
 
